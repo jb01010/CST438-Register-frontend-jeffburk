@@ -1,4 +1,6 @@
-export const SERVER_URL = 'https://registerb-cst438.herokuapp.com/';
+//export const SERVER_URL = 'https://registerb-cst438.herokuapp.com/';
+export const SERVER_URL = 'http://localhost:8080';
+
 
 export const SEMESTER_LIST = [
   {id:0, year:2020, name:'Fall'},
