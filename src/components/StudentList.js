@@ -23,11 +23,15 @@ import AddStudent from './AddStudent';
 class StudentList extends Component {
   constructor(props) {
     super(props);
-    this.state = { students: [] };
+    this.state = { 
+      students: [],
+      isAdmin: false 
+    };
   } 
   
   componentDidMount() {
     this.fetchStudents();
+    this.checkIsAdmin();
   }
   
   fetchStudents = () => {
@@ -37,7 +41,8 @@ class StudentList extends Component {
     fetch(`${SERVER_URL}/student`, 
       {  
         method: 'GET', 
-        headers: { 'X-XSRF-TOKEN': token }
+        headers: { 'X-XSRF-TOKEN': token },
+        credentials: 'include'
       } )
     .then((response) => {
       console.log("FETCH RESP:"+response);
@@ -50,7 +55,7 @@ class StudentList extends Component {
           students: responseData
         });
       } else {
-        toast.error("Faaaetch failed.", {
+        toast.error("Fetch failed.", {
           position: toast.POSITION.BOTTOM_LEFT
         });
       }        
@@ -63,6 +68,8 @@ class StudentList extends Component {
     })
   }
 
+
+
   // Delete Student 
   onDelClick = (id) => {
     if (window.confirm('Are you sure you want to delete the student?')) {
@@ -71,7 +78,8 @@ class StudentList extends Component {
       fetch(`${SERVER_URL}/student/${id}`,
         {
           method: 'DELETE',
-          headers: { 'X-XSRF-TOKEN': token }
+          headers: { 'X-XSRF-TOKEN': token },
+          credentials: 'include'
         })
     .then(res => {
         if (res.ok) {
@@ -103,6 +111,7 @@ class StudentList extends Component {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json',
                    'X-XSRF-TOKEN': token  }, 
+        credentials: 'include',
         body: JSON.stringify(student)
       })
     .then(res => {
@@ -125,6 +134,43 @@ class StudentList extends Component {
     })
   } 
 
+
+  checkIsAdmin = () => {
+
+    let isAdmin = false;
+    const token = Cookies.get('XSRF-TOKEN');
+
+    fetch(
+        `${SERVER_URL}/admin`,
+        {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json',
+                       'X-XSRF-TOKEN': token  },
+            credentials: 'include'
+        })
+        .then((res) => {
+            if (res.status == 200) {
+                isAdmin =  true;
+            } else {
+                isAdmin =  false;
+            }
+        })
+        .catch(err => {
+            toast.error("Fetch failed.", {
+                position: toast.POSITION.BOTTOM_LEFT
+            });
+            console.error(err);
+            isAdmin = false; 
+        })
+        .finally(() => {
+            this.setState({
+                isAdmin: isAdmin
+            })
+        })        
+}
+
+
+
   render() {
      const columns = [
       { field: 'student_id', headerName: 'ID', width: 125 },
@@ -132,12 +178,8 @@ class StudentList extends Component {
       { field: 'email', headerName: 'Email', width: 400 },
       { field: 'status', headerName: 'Status', width: 150 },
       { field: 'status_code', headerName: 'Status Code',  width: 150 },
-      {
-        field: 'id',
-        headerName: '  ',
-        sortable: false,
-        width: 200,
-        renderCell: (params) => (
+      { field: 'id', headerName: '  ', sortable: false, width: 200,
+        renderCell: (params) => isAdmin && (
             <Button
               variant="contained"
               color="secondary"
@@ -150,6 +192,7 @@ class StudentList extends Component {
         )
       }
       ];
+      const isAdmin = this.state.isAdmin
   
   return(
       <div>
@@ -165,6 +208,7 @@ class StudentList extends Component {
                 For DEBUG:  display state.
                 {JSON.stringify(this.state)}
             </div>
+            {isAdmin && (
             <Grid container>
               <Grid item>
 			    <ButtonGroup>
@@ -172,6 +216,7 @@ class StudentList extends Component {
 				</ButtonGroup>
               </Grid>
             </Grid>
+            )}
             <div style={{ height: 400, width: '100%' }}>
               <DataGrid rows={this.state.students} columns={columns} />
             </div>
